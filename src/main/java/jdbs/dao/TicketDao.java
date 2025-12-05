@@ -1,8 +1,6 @@
-package jdbs.Dao;
+package jdbs.dao;
 
 import jdbs.dto.TicketFilter;
-import jdbs.entity.Flight;
-import jdbs.entity.FlightStatus;
 import jdbs.entity.Ticket;
 import jdbs.exception.DaoException;
 import jdbs.utils.ConnectionManager;

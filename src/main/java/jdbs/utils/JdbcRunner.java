@@ -1,19 +1,14 @@
 package jdbs.utils;
 
-import jdbs.Dao.FlightDao;
-import jdbs.Dao.FlightTicketDao;
-import jdbs.Dao.TicketDao;
-import jdbs.dto.TicketFilter;
+import jdbs.dao.FlightDao;
+import jdbs.dao.FlightTicketDao;
+import jdbs.dao.TicketDao;
 import jdbs.entity.Flight;
 import jdbs.entity.Ticket;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import static jdbs.entity.FlightStatus.CANCELLED;
 

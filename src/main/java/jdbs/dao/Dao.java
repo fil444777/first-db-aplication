@@ -1,6 +1,4 @@
-package jdbs.Dao;
-
-import jdbs.entity.Ticket;
+package jdbs.dao;
 
 import java.util.List;
 import java.util.Optional;

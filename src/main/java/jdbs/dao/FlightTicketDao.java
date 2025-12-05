@@ -1,10 +1,11 @@
-package jdbs.Dao;
+package jdbs.dao;
 
 import jdbs.entity.Flight;
 import jdbs.entity.Ticket;
 import jdbs.exception.DaoException;
 import jdbs.utils.ConnectionManager;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -14,7 +15,7 @@ public class FlightTicketDao {
     private final static FlightTicketDao INSTANCE = new FlightTicketDao();
     private final FlightDao flightDao = FlightDao.getInstance();
 
-    public static FlightTicketDao getInstance(){
+    public static FlightTicketDao getInstance() {
         return INSTANCE;
     }
 
@@ -63,27 +64,7 @@ public class FlightTicketDao {
                 cost = ?
             WHERE id = ?
             """;
-    private final static String UPDATE_BY_FID_SQL = """
-            UPDATE ticket
-            SET 
-                id = ?,
-                passport_no = ?,
-                passenger_name = ?, 
-                seat_no = ?, 
-                cost = ?
-            WHERE flight_id = ?;
-            UPDATE flight
-            SET 
-                flight_no = ?, 
-                departure_date = ?, 
-                departure_airport_code = ?, 
-                arrival_date = ?, 
-                arrival_airport_code = ?, 
-                aircraft_id = ?, 
-                status = ?
-            WHERE id = ?
-            
-            """;
+
 
     private Ticket buildTicket(ResultSet result) throws SQLException {
         return new Ticket(result.getLong("id"),
@@ -97,7 +78,7 @@ public class FlightTicketDao {
 
     }
 
-    public String nameTicket (){
+    public String nameTicket() {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_NAME_SQL)) {
             String ticket = null;
@@ -112,7 +93,7 @@ public class FlightTicketDao {
         }
     }
 
-    public Map<String, String > totalName (){
+    public Map<String, String> totalName() {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_TOTAL_NAME_SQL)) {
             Map<String, String> tickets = new HashMap<>();
@@ -125,7 +106,7 @@ public class FlightTicketDao {
         }
     }
 
-    public boolean updateById (Long id, Ticket ticket){
+    public boolean updateById(Long id, Ticket ticket) {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(UPDATE_BY_ID_SQL)) {
             statement.setString(1, ticket.getPassportNo());
@@ -140,27 +121,78 @@ public class FlightTicketDao {
         }
     }
 
-    public boolean updateTicketAndFlightById (Long id, Flight flight, Ticket ticket){
-        try (var connection = ConnectionManager.get();
-             var statement = connection.prepareStatement(UPDATE_BY_FID_SQL)) {
-            statement.setLong(1, ticket.getId());
-            statement.setString(2, ticket.getPassportNo());
-            statement.setString(3, ticket.getPassengerNo());
-            statement.setString(4, ticket.getSeatNo());
-            statement.setBigDecimal(5, ticket.getCost());
-            statement.setLong(6, id);
+    public boolean updateFlightAndTicketsByFlightId(Long flightId, Flight flight, Ticket ticket) {
+        try (var connection = ConnectionManager.get()) {
+            connection.setAutoCommit(false);
 
-            statement.setString(7, flight.getFlightNo());
-            statement.setTimestamp(8, Timestamp.valueOf(flight.getDepartureDate()));
-            statement.setString(9, flight.getDepartureAirportCode());
-            statement.setTimestamp(10, Timestamp.valueOf(flight.getArrivalDate()));
-            statement.setString(11, flight.getArrivalAirportCode());
-            statement.setInt(12, flight.getAircraftId());
-            statement.setLong(13, id);
+            try {
+                boolean flightUpdated = updateFlight(connection, flightId, flight);
 
-            return statement.executeUpdate() > 0;
+                boolean ticketsUpdated = updateTickets(connection, flightId, ticket);
+
+                if (flightUpdated && ticketsUpdated) {
+                    connection.commit();
+                    return true;
+                } else {
+                    connection.rollback();
+                    return false;
+                }
+            } catch (SQLException e) {
+                connection.rollback();
+                throw new DaoException(e);
+            }
         } catch (SQLException e) {
             throw new DaoException(e);
+        }
+    }
+
+    private boolean updateFlight(Connection connection, Long flightId, Flight flight) throws SQLException {
+        String sql = """
+                UPDATE flight 
+                SET 
+                    flight_no = ?, 
+                    departure_date = ?, 
+                    departure_airport_code = ?, 
+                    arrival_date = ?, 
+                    arrival_airport_code = ?, 
+                    aircraft_id = ?, 
+                    status = ?
+                WHERE id = ?
+                """;
+
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setString(1, flight.getFlightNo());
+            statement.setTimestamp(2, Timestamp.valueOf(flight.getDepartureDate()));
+            statement.setString(3, flight.getDepartureAirportCode());
+            statement.setTimestamp(4, Timestamp.valueOf(flight.getArrivalDate()));
+            statement.setString(5, flight.getArrivalAirportCode());
+            statement.setInt(6, flight.getAircraftId());
+            statement.setString(7, String.valueOf(flight.getStatus()));
+            statement.setLong(8, flightId);
+
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    private boolean updateTickets(Connection connection, Long flightId, Ticket ticket) throws SQLException {
+        String sql = """
+                UPDATE ticket 
+                SET 
+                    passport_no = ?, 
+                    passenger_name = ?, 
+                    seat_no = ?, 
+                    cost = ?
+                WHERE flight_id = ?
+                """;
+
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setString(1, ticket.getPassportNo());
+            statement.setString(2, ticket.getPassengerNo());
+            statement.setString(3, ticket.getSeatNo());
+            statement.setBigDecimal(4, ticket.getCost());
+            statement.setLong(5, flightId);
+
+            return statement.executeUpdate() > 0;
         }
     }
 
