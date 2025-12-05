@@ -23,35 +23,28 @@ public class FlightTicketDao {
     }
 
     private final static String FIND_NAME_SQL = """
-            WITH passenger_counts AS (
                                                                 SELECT
-                                                                    passenger_name,
-                                                                    COUNT(*) AS name_count
-                                                                FROM ticket
-                                                                GROUP BY passenger_name
-                                                            )
-                                                            SELECT\s
-                                                                passenger_name,
-                                                                name_count
-                                                            FROM passenger_counts
-                                                            ORDER BY name_count DESC
-                                                            LIMIT 1;
+                                                                        SPLIT_PART(passenger_name, ' ', 1) AS first_name,
+                                                                        COUNT(*) AS name_count
+                                                                    FROM ticket
+                                                                    GROUP BY SPLIT_PART(passenger_name, ' ', 1)
+                                                                    ORDER BY name_count DESC
             """;
 
     private final static String FIND_TOTAL_NAME_SQL = """
             WITH passenger_counts AS (
-                                                                SELECT
-                                                                    passenger_name,
-                                                                    COUNT(*) AS name_count
-                                                                FROM ticket
-                                                                GROUP BY passenger_name
-                                                            )
-                                                            SELECT\s
-                                                                passenger_name,
-                                                                name_count
-                                                            FROM passenger_counts
-                                                            ORDER BY name_count DESC
-                                                            ;
+             SELECT
+              passenger_name,
+              COUNT(*) AS name_count
+               FROM ticket
+                GROUP BY passenger_name
+                 )
+                 SELECT
+                 passenger_name,
+                 name_count
+                 FROM passenger_counts
+                  ORDER BY name_count DESC
+                  ;
             """;
 
     private final static String UPDATE_BY_ID_SQL = """
@@ -78,22 +71,22 @@ public class FlightTicketDao {
 
     }
 
-    public String nameTicket() {
+    // задание 1
+    public Map<String, String> commonNames() {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_NAME_SQL)) {
-            String ticket = null;
+            Map<String, String> tickets = new HashMap<>();
             var result = statement.executeQuery();
-            if (result.next())
-                ticket = result.getString("passenger_name");
-            return ticket;
-
-
+            while (result.next())
+                tickets.put(result.getString("first_name"), result.getString("name_count"));
+            return tickets;
         } catch (SQLException e) {
             throw new DaoException(e);
         }
     }
 
-    public Map<String, String> totalName() {
+    // задание 2
+    public Map<String, String> ticketsByNames() {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_TOTAL_NAME_SQL)) {
             Map<String, String> tickets = new HashMap<>();
@@ -106,6 +99,7 @@ public class FlightTicketDao {
         }
     }
 
+    // задание 3
     public boolean updateById(Long id, Ticket ticket) {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(UPDATE_BY_ID_SQL)) {
@@ -121,6 +115,7 @@ public class FlightTicketDao {
         }
     }
 
+    // 4 Задание
     public boolean updateFlightAndTicketsByFlightId(Long flightId, Flight flight, Ticket ticket) {
         try (var connection = ConnectionManager.get()) {
             connection.setAutoCommit(false);
@@ -145,6 +140,7 @@ public class FlightTicketDao {
             throw new DaoException(e);
         }
     }
+
 
     private boolean updateFlight(Connection connection, Long flightId, Flight flight) throws SQLException {
         String sql = """

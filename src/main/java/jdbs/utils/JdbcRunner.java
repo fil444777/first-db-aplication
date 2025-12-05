@@ -20,7 +20,7 @@ public class JdbcRunner {
         // System.out.println(flightTicketDao.nameTicket());
         //System.out.println(flightTicketDao.totalName());
         // System.out.println(ticketDao.findById(3L));
-        LocalDateTime time = LocalDateTime.of(2025, 6, 15, 14, 30);
+        /*   LocalDateTime time = LocalDateTime.of(2025, 6, 15, 14, 30);
         LocalDateTime time1 = LocalDateTime.of(2025, 6, 16, 14, 30);
         BigDecimal cost = new BigDecimal("123.45");
         Flight flight = new Flight(9L, "MN3002", time,
@@ -35,7 +35,8 @@ public class JdbcRunner {
         System.out.println(flightDao.findById(9L));
 //            var flightDao = FlightDao.getInstance();
 //            System.out.println(flightDao.findAll());
-
+*/
+        System.out.println(flightTicketDao.commonNames());
     }
 
 }
