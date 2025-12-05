@@ -5,9 +5,7 @@ import jdbs.entity.FlightStatus;
 import jdbs.exception.DaoException;
 import jdbs.utils.ConnectionManager;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +21,17 @@ public class FlightDao implements Dao<Long, Flight> {
 
     private final static String FIND_BY_ID_SQL = FIND_ALL_SQL + """
             WHERE id = ?
+            """;
+
+    private final static String SAVE_SQL = """
+            INSERT INTO flight 
+            (flight_no, departure_date, departure_airport_code, arrival_date, arrival_airport_code, aircraft_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
+
+    private final static String DELETE_SQL = """
+            DELETE FROM flight
+            where id = ?
             """;
 
     @Override
@@ -85,13 +94,38 @@ public class FlightDao implements Dao<Long, Flight> {
     }
 
     @Override
-    public Flight save(Flight ticket) {
-        return null;
+    public Flight save(Flight flight) {
+        try (var connection = ConnectionManager.get();
+             var statement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, flight.getFlightNo());
+            statement.setTimestamp(2, Timestamp.valueOf(flight.getDepartureDate()));
+            statement.setString(3, flight.getDepartureAirportCode());
+            statement.setTimestamp(4, Timestamp.valueOf(flight.getArrivalDate()));
+            statement.setString(5,flight.getArrivalAirportCode());
+            statement.setInt(6, flight.getAircraftId());
+            statement.setString(7, String.valueOf(flight.getStatus()));
+
+            statement.executeUpdate();
+            var keys = statement.getGeneratedKeys();
+            if (keys.next())
+                flight.setId(keys.getLong("id"));
+
+            return flight;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
     }
 
     @Override
     public boolean delete(Long id) {
-        return false;
+        try (var connection = ConnectionManager.get();
+             var statement = connection.prepareStatement(DELETE_SQL)) {
+            statement.setLong(1, id);
+
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
     }
 
     public static FlightDao getInstance() {
