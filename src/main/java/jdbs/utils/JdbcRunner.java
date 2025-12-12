@@ -36,7 +36,7 @@ public class JdbcRunner {
 //            var flightDao = FlightDao.getInstance();
 //            System.out.println(flightDao.findAll());
 */
-        System.out.println(flightTicketDao.commonNames());
+        System.out.println(flightDao.findAll());
     }
 
 }

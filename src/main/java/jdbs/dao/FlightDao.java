@@ -14,6 +14,9 @@ public class FlightDao implements Dao<Long, Flight> {
 
     private final static FlightDao INSTANCE = new FlightDao();
 
+    private FlightDao() {
+    }
+
     private final static String FIND_ALL_SQL = """
             SELECT id, flight_no, departure_date, departure_airport_code, arrival_date, arrival_airport_code, aircraft_id, status
                 FROM flight
@@ -34,9 +37,34 @@ public class FlightDao implements Dao<Long, Flight> {
             where id = ?
             """;
 
+    private final static String UPDATE_SQL = """
+            UPDATE flight
+            SET flight_no = ?,
+                departure_date = ?,
+                departure_airport_code = ?,
+                arrival_date = ?,
+                arrival_airport_code = ?,
+                aircraft_id = ?,
+                status = ?
+            WHERE id = ?
+            """;
+
     @Override
-    public boolean update(Flight ticket) {
-        return false;
+    public boolean update(Flight flight) {
+        try (var connection = ConnectionManager.get();
+             var statement = connection.prepareStatement(UPDATE_SQL)) {
+            statement.setString(1, flight.getFlightNo());
+            statement.setTimestamp(2, Timestamp.valueOf(flight.getDepartureDate()));
+            statement.setString(3, flight.getDepartureAirportCode());
+            statement.setTimestamp(4, Timestamp.valueOf(flight.getArrivalDate()));
+            statement.setString(5, flight.getArrivalAirportCode());
+            statement.setInt(6, flight.getAircraftId());
+            statement.setString(7, String.valueOf(flight.getStatus()));
+            statement.setLong(8, flight.getId());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DaoException(e);
+        }
     }
 
     @Override
@@ -132,6 +160,5 @@ public class FlightDao implements Dao<Long, Flight> {
         return INSTANCE;
     }
 
-    private FlightDao() {
-    }
+
 }
