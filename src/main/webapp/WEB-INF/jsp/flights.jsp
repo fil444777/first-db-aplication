@@ -12,6 +12,7 @@
     <title>Перелеты</title>
 </head>
 <body>
+<%@include file="header.jsp"%>
 <h1> Список перелетов: </h1>
 <c:if test="${not empty requestScope.flights}">
     <c:forEach var="flight" items="${requestScope.flights}">

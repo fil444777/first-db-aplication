@@ -1,10 +1,18 @@
 package jdbs.dto;
 
+import jdbs.entity.Gender;
+import jdbs.entity.Role;
 import lombok.*;
 
-@Data
+import java.time.LocalDate;
+
+@Value
 @Builder
 public class UserDto {
-    private Long id;
-    private String email;
+     Long id;
+     String name;
+     LocalDate birthday;
+     String email;
+     Role role;
+     Gender gender;
 }
